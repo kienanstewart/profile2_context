@@ -1,0 +1,9 @@
+name = Profile2 Context
+description = Condition based contexts for Profile2
+package = Context
+core = 7.x
+
+dependencies[] = profile2
+dependencies[] = context
+
+files[] = plugins/date_context_date_condition.inc

@@ -1,0 +1,80 @@
+<?php
+/**
+ * @file
+ *
+ * Profile2 context module.
+ */
+
+/**
+ * Implements hook_context_plugins().
+ */
+function profile2_context_context_plugins() {
+  $plugins = array();
+  $plugins['profile2_context_condition_profile2_page'] = array(
+    'handler' => array(
+      'class' => 'profile2_context_condition_profile2_page',
+      'parent' => 'context_condition',
+      'path' => drupal_get_path('module', 'profile2_context') . '/plugins',
+      'file' => 'profile2_context_condition_profile2_page.inc',
+    ),
+  );
+  return $plugins;
+}
+
+/**
+ * Implements hook_context_registry().
+ */
+function profile2_context_context_registry() {
+  return array(
+    'conditions' => array(
+      'profile2_context_condition_profile2_page' => array(
+        'title' => t('Profile2'),
+        'description' => t('Set a condition based on the profile2 page'),
+        'plugin' => 'profile2_context_condition_profile2_page',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_user_view_alter().
+ */
+function profile2_context_user_view_alter(&$build) {
+  $account = $build['#account'];
+  foreach (profile2_get_types() as $type => $profile_type) {
+    if ($profile_type->userView && $profile = profile2_load_by_user($account, $type)) {
+      if (profile2_access('view', $profile)) {
+        if ($plugin = context_get_plugin('condition', 'profile2_context_condition_profile2_page')) {
+          $plugin->execute($profile, 'view');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the user edit form.
+ */
+function profile2_context_form_user_profile_form_alter(&$form, &$form_state) {
+  if (($type = profile2_get_types($form['#user_category'])) && $type->userCategory) {
+    if ($profile = profile2_load_by_user($form['#user'], $form['#user_category'])) {
+      if ($plugin = context_get_plugin('condition', 'profile2_context_condition_profile2_page')) {
+        $plugin->execute($profile, 'edit');
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the registration form.
+ */
+function profile2_context_form_user_register_form_alter(&$form, &$form_state) {
+  foreach (profile2_get_types() as $type_name => $profile_type) {
+    if (!empty($profile_type->data['registration'])) {
+      if ($plugin = context_get_plugin('condition', 'profile2_context_condition_profile2_page')) {
+        $plugin->execute(profile2_create(array('type' => $type_name)), 'register');
+      }
+    }
+  }
+}
+
