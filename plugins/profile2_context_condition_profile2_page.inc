@@ -39,6 +39,16 @@ class profile2_context_condition_profile2_page extends context_condition {
         '#description' => t('Set this context on profile2 view/edit modes'),
         '#default_value' => isset($defaults['profile2_mode']) ? $defaults['profile2_mode'] : TRUE,
       ),
+      'active_user' => array(
+         '#title' => t('Active for'),
+         '#type' => 'select',
+         '#options' => array(
+            'all' => t('Any user'),
+            'current' => t('Only the current user'),
+            'other' => t('Only other users'),
+          ),
+         '#default_value' => isset($defaults['active_user']) ? $defaults['active_user'] : 'all',
+       ),
     );
   }
 
@@ -46,13 +56,27 @@ class profile2_context_condition_profile2_page extends context_condition {
    * Plugin execution.
    */
   public function execute($profile2, $op) {
+    global $user;
     foreach ($this->get_contexts($profile2->type) as $context) {
       $options = $this->fetch_from_context($context, 'options');
-
       if ($selected = $options['profile2_mode'][$op]) {
-        $this->condition_met($context, $profile2->type);
+         switch ($options['active_user']) {
+            case 'current':
+               if ($profile2->uid == $user->uid) {
+                  $this->condition_met($context, $profile2->type);
+               }
+               break;
+            case 'other':
+               if ($profile2->uid != $user->uid) {
+                  $this->condition_met($context, $profile2_type);
+               }
+               break;
+            case 'all':
+            default:
+               $this->condition_met($context, $profile2->type);
+         }
       }
-
     }
   }
+
 }
