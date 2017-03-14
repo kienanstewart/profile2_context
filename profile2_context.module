@@ -37,6 +37,19 @@ function profile2_context_context_registry() {
 }
 
 /**
+ * Implements hook_profile2_view_alter().
+ */
+function profile2_context_profile2_view_alter(&$build) {
+  if ($build['#view_mode'] == 'page') {
+    if (profile2_access('view', $build['#entity'])) {
+      if ($plugin = context_get_plugin('condition', 'profile2_context_condition_profile2_page')) {
+        $plugin->execute($build['#entity'], 'view');
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_user_view_alter().
  */
 function profile2_context_user_view_alter(&$build) {
